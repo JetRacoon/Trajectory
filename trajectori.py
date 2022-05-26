@@ -2,6 +2,11 @@ import cv2
 import numpy as np
 
 
+def createPath( img ):
+    h, w = img.shape[:2] 
+    return np.zeros((h, w, 3), np.uint8)
+
+
 cap = cv2.VideoCapture(1)
 cap.set(3, 640)
 cap.set(4, 480)
@@ -11,8 +16,13 @@ max = (30, 230, 255)
 h_min = np.array(min, np.uint8)
 h_max = np.array(max, np.uint8)
 
+lastx = 0
+lasty = 0
+path_color = (0, 255, 0)
 flag, img = cap.read()
-trajectory = []
+
+flag, img = cap.read()
+path = createPath(img)
 
 while True:
     flag, img = cap.read()
@@ -28,13 +38,12 @@ while True:
         y = int(dM01 / dArea)
         cv2.circle(img, (x,y), 10, (255, 0, 0), -1)
         #print(f"x: {x}, y: {y}")
-        coordinates = []
-        coordinates.append(x)
-        coordinates.append(y)
-        if coordinates not in trajectory:
-            trajectory.append(coordinates)
-            for i in trajectory:
-                cv2.circle(img, (i[0], i[1]), 5, (0, 0, 255), -1)
+    if lastx > 0 and lasty > 0:
+        cv2.line(path, (lastx, lasty), (x,y), path_color, 5)
+    lastx = x
+    lasty = y
+    # накладываем линию траектории поверх изображения
+    img = cv2.add( img, path)
     cv2.imshow('result', img) 
     cv2.imshow('thresh', thresh)
     ch = cv2.waitKey(5)
